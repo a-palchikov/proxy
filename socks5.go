@@ -85,6 +85,7 @@ type Conn struct {
 
 // Run starts the new connection.
 func (c *Conn) Run() error {
+	c.log.Debug("Serving request", "request", c.request, "conn", formatConn(c.clientConn))
 	err := parseClientGreeting(c.clientConn)
 	if err != nil {
 		if _, err := c.clientConn.Write([]byte{socks5Version, noAcceptableAuth}); err != nil {
@@ -212,6 +213,14 @@ func parseClientGreeting(r io.Reader) error {
 	return fmt.Errorf("no acceptable auth methods")
 }
 
+func (r *request) String() string {
+	if r == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("request(cmd=%s,dst=%s,port=%d,dst_addr=%s)",
+		r.command, r.destination, r.port, r.destAddrType)
+}
+
 // request represents data contained within a SOCKS5
 // connection request packet.
 type request struct {
@@ -321,9 +330,36 @@ func (res *response) marshal() ([]byte, error) {
 	return pkt, nil
 }
 
+func formatConn(c net.Conn) string {
+	if c == nil {
+		return "<nil>"
+	}
+	var localAddr, remoteAddr string
+	if laddr := c.LocalAddr(); laddr != nil {
+		localAddr = laddr.String()
+	}
+	if raddr := c.RemoteAddr(); raddr != nil {
+		remoteAddr = raddr.String()
+	}
+	return fmt.Sprintf("conn(laddr=%s,raddr=%s)", localAddr, remoteAddr)
+}
+
 // socks5Version is the byte that represents the SOCKS version
 // in requests.
 const socks5Version byte = 5
+
+func (r commandType) String() string {
+	switch r {
+	case connect:
+		return "connect"
+	case bind:
+		return "bind"
+	case udpAssociate:
+		return "udp_assoc"
+	default:
+		return fmt.Sprint("unknown(", byte(r), ")")
+	}
+}
 
 // commandType are the bytes sent in SOCKS5 packets
 // that represent the kind of connection the client needs.
@@ -335,6 +371,19 @@ const (
 	bind         commandType = 2
 	udpAssociate commandType = 3
 )
+
+func (r addrType) String() string {
+	switch r {
+	case ipv4:
+		return "ipv4"
+	case domainName:
+		return "domain"
+	case ipv6:
+		return "ipv6"
+	default:
+		return fmt.Sprint("unknown(", byte(r), ")")
+	}
+}
 
 // addrType are the bytes sent in SOCKS5 packets
 // that represent particular address types.
