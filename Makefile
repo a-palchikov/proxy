@@ -16,6 +16,7 @@ image:
 		--build-arg GO_DOCKER_BASE=$(GO_DOCKER_BASE) \
 		--build-arg DOCKER_BASE=$(DOCKER_BASE) \
 		--output type=image,name=$(REGISTRY)/$(REPOSITORY_NAMESPACE)/test-proxy:$(VERSION) \
+		--push \
 		.
 
 $(BUILDDIR):
