@@ -13,6 +13,7 @@ eof
 
 ARG GO_DOCKER_BASE
 FROM ${DOCKER_BASE} AS releaser
+LABEL org.opencontainers.image.source="https://github.com/a-palchikov/proxy"
 
 COPY --from=builder /src/_build/proxy /
 
